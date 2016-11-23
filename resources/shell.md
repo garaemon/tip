@@ -8,3 +8,9 @@
   ```
   find . -type f -print0 | xargs -0 sed -i -e ¡Ès/foo/bar/g"
   ```
+- Exclude specifi directory with find command
+
+  ```
+  find . -type d -name foo -prune -o [condition]
+  find . -type d -name foo -prune -o -name '*.md' -print
+  ```
