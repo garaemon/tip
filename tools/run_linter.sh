@@ -2,7 +2,7 @@
 
 # run linter to python scripts.
 # This script requires:
-#   pip install hacking flake8 flake8-import-order flake8-pep257
+#   pip install hacking flake8 flake8-import-order
 
 set -e
 

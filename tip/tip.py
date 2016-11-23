@@ -71,5 +71,6 @@ def main():
         for tips_file in tips_files:
             show_file_contents(tips_file)
 
+
 if __name__ == '__main__':
     main()
