@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+
+import tip.tip
+
+if __name__ == '__main__':
+    tip.tip.main()
