@@ -1,10 +1,13 @@
 #!/usr/bin/env python
-import os
-import sys
-import logging
+
 import argparse
+import logging
+import os
 import shutil
+import sys
+
 import coloredlogs
+
 
 def build_parser():
     'return ArgumentParser instance'
@@ -14,6 +17,7 @@ def build_parser():
                         help='Print files instead of their contents')
     return parser
 
+
 def get_resource_directories():
     'return list of directories to read tips markdown files'
     current_directory = os.path.dirname(__file__)
@@ -21,6 +25,7 @@ def get_resource_directories():
     # remove directories which do not exist
     return [d for d in [default_directory]
             if os.path.exists(d)]
+
 
 def get_tips_files_from_directories(resource_dirs):
     'return list of markdown files in specified directories'
@@ -33,10 +38,12 @@ def get_tips_files_from_directories(resource_dirs):
                     tip_files.append(os.path.join(root, file))
     return tip_files
 
+
 def show_file_contents(tip_file):
     with open(tip_file) as f:
         # print contents of the file
         shutil.copyfileobj(f, sys.stdout)
+
 
 def main():
     'main function for tip command'
@@ -59,7 +66,7 @@ def main():
         sys.exit(1)
     if args.files:
         for tips_file in tips_files:
-            print tips_file
+            print(tips_file)
     else:
         for tips_file in tips_files:
             show_file_contents(tips_file)
