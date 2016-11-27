@@ -1,16 +1,18 @@
-- Find files which have specific suffix
+## Find files which have specific suffix
 
-  ```
-  find . -name "*.md"
-  ```
-- Replace specific keyword under some directories
+```
+find . -name "*.md"
+```
 
-  ```
-  find . -type f -print0 | xargs -0 sed -i -e ¡Ès/foo/bar/g"
-  ```
-- Exclude specifi directory with find command
+## Replace specific keyword under some directories
 
-  ```
-  find . -type d -name foo -prune -o [condition]
-  find . -type d -name foo -prune -o -name '*.md' -print
-  ```
+```
+find . -type f -print0 | xargs -0 sed -i -e ¡Ès/foo/bar/g"
+```
+
+## Exclude specifi directory with find command
+
+```
+find . -type d -name foo -prune -o [condition]
+find . -type d -name foo -prune -o -name '*.md' -print
+```
