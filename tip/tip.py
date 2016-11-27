@@ -29,8 +29,9 @@ def get_resource_directories():
     'return list of directories to read tips markdown files'
     current_directory = os.path.dirname(__file__)
     default_directory = os.path.join(current_directory, '..', 'resources')
+    user_directory = os.path.expanduser('~/.tips')
     # remove directories which do not exist
-    return [d for d in [default_directory]
+    return [d for d in [default_directory, user_directory]
             if os.path.exists(d)]
 
 
