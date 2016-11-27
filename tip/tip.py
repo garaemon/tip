@@ -13,6 +13,9 @@ import sys
 # 3rdparty libraries
 import coloredlogs
 
+HIGHLIGHT_FG_COLOR = curses.COLOR_WHITE
+HIGHLIGHT_BG_COLOR = curses.COLOR_MAGENTA
+
 
 def build_parser():
     'return ArgumentParser instance'
@@ -53,23 +56,32 @@ def show_file_contents(tip_file):
         shutil.copyfileobj(f, sys.stdout)
 
 
-def addstr_with_highlight(stdscr, line, key_search_regexp):
+def addstr_with_highlight(stdscr, line, key_search_regexp, highlight_line):
     'Show a line with highlighting keyword.'
     search_result = key_search_regexp.search(line)
+    if highlight_line:
+        default_attribute = curses.color_pair(1)
+    else:
+        default_attribute = 0
     if search_result:
         start_pos = 0
         for m in key_search_regexp.finditer(line):
             # m.start -- m.end should be highlighted
             # start_pos -- m.start() -> normal color
-            stdscr.addstr(0, start_pos, line[start_pos:m.start()])
+            stdscr.addstr(0, start_pos, line[start_pos:m.start()], default_attribute)
             # m.start() -> m.end() -> highlighted
             stdscr.addstr(0, m.start(), line[m.start():m.end()],
-                          curses.A_UNDERLINE | curses.A_BOLD)
+                          curses.A_UNDERLINE | curses.A_BOLD | default_attribute)
             # update srtart_pos for next loop
             start_pos = m.end()
-        stdscr.addstr(0, start_pos, line[start_pos:])
+        stdscr.addstr(0, start_pos, line[start_pos:], default_attribute)
     else:
-        stdscr.addstr(0, 0, line)
+        stdscr.addstr(0, 0, line, default_attribute)
+    # when highlighting equals to True, add space until the end of the terminal
+    if highlight_line:
+        (window_y, window_x) = stdscr.getmaxyx()
+        if window_x > len(line) + 1:
+            stdscr.addstr(0, len(line), ' ' * (window_x - len(line) - 1), default_attribute)
 
 
 class TextBlock(object):
@@ -80,7 +92,7 @@ class TextBlock(object):
         self.content = content
         self.filename = filename
 
-    def show_with_curses(self, stdscr, keys=[], key_search_regexp=None):
+    def show_with_curses(self, stdscr, keys=[], key_search_regexp=None, highlight=False):
         '''Show content of TextBlock with curses. key_search_regexp is a regular
         expression object to search keywords with OR condition.
 
@@ -91,9 +103,9 @@ class TextBlock(object):
         for line, i in zip(lines, range(len(lines))):
             if i == len(lines) - 1:
                 # last line should have '##' as prefix.
-                addstr_with_highlight(stdscr, '##' + line, key_search_regexp)
+                addstr_with_highlight(stdscr, '##' + line, key_search_regexp, highlight)
             else:
-                addstr_with_highlight(stdscr, line, key_search_regexp)
+                addstr_with_highlight(stdscr, line, key_search_regexp, highlight)
             stdscr.clrtoeol()
             stdscr.insertln()
         # Add separator with file name
@@ -119,7 +131,7 @@ class TextBlockContainer(object):
         'blocks is a list of TextBlock instance'
         self.blocks = blocks
 
-    def show_with_curses(self, stdscr, search_string):
+    def show_with_curses(self, stdscr, search_string, active_block_index):
         'Show blocks which mach search_string'
         search_keywords = search_string.split()
         search_keywords_and_regexp = re.compile(''.join(
@@ -128,16 +140,21 @@ class TextBlockContainer(object):
                                                re.IGNORECASE)
         matched_blocks = [block for block in self.blocks
                           if block.search(search_keywords_and_regexp)]
-        for block in matched_blocks:
-            block.show_with_curses(stdscr, search_keywords, search_keywords_or_regexp)
+        reversed_active_block_index = len(matched_blocks) - active_block_index - 1
+        if reversed_active_block_index < 0:
+            reversed_active_block_index = 0
+        for block, i in zip(matched_blocks, range(len(matched_blocks))):
+            block.show_with_curses(stdscr, search_keywords, search_keywords_or_regexp,
+                                   reversed_active_block_index == i)
 
 
-def display_contents_with_incremental_search(stdscr, search_string, block_container):
+def display_contents_with_incremental_search(stdscr, search_string, active_block_index,
+                                             block_container):
     'Display file contents with incremental searching'
     stdscr.erase()
     # Show results first because `insertln` insert a line upwords.
     # We need to print content in reversed order.
-    block_container.show_with_curses(stdscr, search_string)
+    block_container.show_with_curses(stdscr, search_string, active_block_index)
     # Show prompt.
     stdscr.addstr(0, 0, 'Query: ' + search_string)
     stdscr.clrtoeol()
@@ -155,18 +172,25 @@ def show_file_contents_with_incremental_search(tips_files):
             content_string = f.read()
             blocked_contents_string = content_string.split('##')
             for blocked_content in blocked_contents_string:
-                block = TextBlock(blocked_content, tips_file)
-                blocks.append(block)
+                if len(blocked_content) != 0:
+                    # Do not show empty content
+                    block = TextBlock(blocked_content, tips_file)
+                    blocks.append(block)
     block_container = TextBlockContainer(blocks)
+    # to debug key input
+    # block_container = TextBlockContainer([])
     stdscr = curses.initscr()
     curses.start_color()
+    curses.init_pair(1, HIGHLIGHT_FG_COLOR, HIGHLIGHT_BG_COLOR)
     curses.noecho()
     curses.cbreak()             # Do not wait for enter key
     stdscr.keypad(True)
     stdscr.clear()
     try:
         search_string = ''
-        display_contents_with_incremental_search(stdscr, search_string, block_container)
+        active_block_index = 0
+        display_contents_with_incremental_search(stdscr, search_string, active_block_index,
+                                                 block_container)
         while True:
             c = stdscr.getch()
             if c == curses.KEY_ENTER or c == 10 or c == 13:
@@ -176,14 +200,27 @@ def show_file_contents_with_incremental_search(tips_files):
                   c == curses.KEY_DL or c == 127):
                 # backspace
                 search_string = search_string[:-1]
+                active_block_index = 0
             elif c == 21:
                 # Ctrl-U, clear all the string
                 search_string = ""
+                active_block_index = 0
+            elif c == 14 or c == curses.KEY_DOWN:
+                # C-n or down
+                active_block_index = active_block_index + 1
+            elif c == 16 or c == curses.KEY_UP:
+                # C-p or up
+                active_block_index = active_block_index - 1
             elif 0 <= c and c < 256:
                 # ascii character
                 search_string = search_string + chr(c)
-            display_contents_with_incremental_search(stdscr, search_string, block_container)
-            # debug printing
+                active_block_index = 0
+            # chop active_block_index
+            if active_block_index < 0:
+                active_block_index = 0
+            display_contents_with_incremental_search(stdscr, search_string, active_block_index,
+                                                     block_container)
+            # debug key input
             # stdscr.addstr(0, 0, "current format: {}".format(c))
             # stdscr.clrtoeol()
             # stdscr.insertln()
