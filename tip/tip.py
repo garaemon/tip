@@ -85,7 +85,7 @@ class TextBlock(object):
         expression object to search keywords with OR condition.
 
         key_search_regexp is a regular expression object to search keywords with OR condition.
-'''
+        '''
         lines = self.content.split('\n')
         lines.reverse()         # reverse lines
         for line, i in zip(lines, range(len(lines))):
