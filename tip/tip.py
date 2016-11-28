@@ -62,8 +62,10 @@ def addstr_with_highlight(stdscr, line, key_search_regexp, highlight_line):
     search_result = key_search_regexp.search(line)
     if highlight_line:
         default_attribute = curses.color_pair(1)
+        whitespace_attribute = curses.color_pair(2)
     else:
         default_attribute = 0
+        whitespace_attribute = 0
     if search_result:
         start_pos = 0
         for m in key_search_regexp.finditer(line):
@@ -82,7 +84,9 @@ def addstr_with_highlight(stdscr, line, key_search_regexp, highlight_line):
     if highlight_line:
         (window_y, window_x) = stdscr.getmaxyx()
         if window_x > len(line) + 1:
-            stdscr.addstr(0, len(line), ' ' * (window_x - len(line) - 1), default_attribute)
+            # Print '-' with same foreground and background color because
+            # curses cannot colorize white spaces.
+            stdscr.addstr(0, len(line), '-' * (window_x - len(line) - 1), whitespace_attribute)
 
 
 class TextBlock(object):
@@ -132,13 +136,21 @@ class TextBlockContainer(object):
         'blocks is a list of TextBlock instance'
         self.blocks = blocks
 
+    def build_regexp_and_search(self, search_keywords):
+        'Build regular expression fod AND search'
+        return re.compile(''.join(
+            ['(?=.*{})'.format(key) for key in search_keywords]), re.IGNORECASE)
+
+    def build_regexp_or_search(self, search_keywords):
+        'Build regular expression fod OR search'
+        return re.compile('({})'.format('|'.join(search_keywords)),
+                          re.IGNORECASE)
+
     def show_with_curses(self, stdscr, search_string, active_block_index):
         'Show blocks which mach search_string'
         search_keywords = search_string.split()
-        search_keywords_and_regexp = re.compile(''.join(
-            ['(?=.*{})'.format(key) for key in search_keywords]), re.IGNORECASE)
-        search_keywords_or_regexp = re.compile('({})'.format('|'.join(search_keywords)),
-                                               re.IGNORECASE)
+        search_keywords_and_regexp = self.build_regexp_and_search(search_keywords)
+        search_keywords_or_regexp = self.build_regexp_or_search(search_keywords)
         matched_blocks = [block for block in self.blocks
                           if block.search(search_keywords_and_regexp)]
         reversed_active_block_index = len(matched_blocks) - active_block_index - 1
@@ -147,6 +159,20 @@ class TextBlockContainer(object):
         for block, i in zip(matched_blocks, range(len(matched_blocks))):
             block.show_with_curses(stdscr, search_keywords, search_keywords_or_regexp,
                                    reversed_active_block_index == i)
+
+    def echo_active_block(self, search_string, active_block_index):
+        'Echo content of specified active block without curses'
+        search_keywords_and_regexp = self.build_regexp_and_search(search_string.split())
+        matched_blocks = [block for block in self.blocks
+                          if block.search(search_keywords_and_regexp)]
+        if len(matched_blocks) == 0:
+            # no matching blocks
+            return
+        # normalize active_block_index
+        reversed_active_block_index = len(matched_blocks) - active_block_index - 1
+        if reversed_active_block_index < 0:
+            reversed_active_block_index = 0
+        matched_blocks[reversed_active_block_index].show()
 
 
 def display_contents_with_incremental_search(stdscr, search_string, active_block_index,
@@ -183,6 +209,7 @@ def show_file_contents_with_incremental_search(tips_files):
     stdscr = curses.initscr()
     curses.start_color()
     curses.init_pair(1, HIGHLIGHT_FG_COLOR, HIGHLIGHT_BG_COLOR)
+    curses.init_pair(2, HIGHLIGHT_BG_COLOR, HIGHLIGHT_BG_COLOR)
     curses.noecho()
     curses.cbreak()             # Do not wait for enter key
     stdscr.keypad(True)
@@ -192,14 +219,18 @@ def show_file_contents_with_incremental_search(tips_files):
         active_block_index = 0
         display_contents_with_incremental_search(stdscr, search_string, active_block_index,
                                                  block_container)
+        # flag which will be True only if Enter key is pressed.
+        finish_normally = False
         while True:
             c = stdscr.getch()
             if c == curses.KEY_ENTER or c == 10 or c == 13:
                 # enter key
+                finish_normally = True
+                # exit from while loop
                 break
             elif (c == curses.KEY_BACKSPACE or c == 8 or
                   c == curses.KEY_DL or c == 127):
-                # backspace
+                # backspace, remove one character from search_string
                 search_string = search_string[:-1]
                 active_block_index = 0
             elif c == 21:
@@ -225,12 +256,13 @@ def show_file_contents_with_incremental_search(tips_files):
             # stdscr.addstr(0, 0, "current format: {}".format(c))
             # stdscr.clrtoeol()
             # stdscr.insertln()
-
     finally:
         curses.nocbreak()
         stdscr.keypad(0)
         curses.echo()
         curses.endwin()
+    if finish_normally:
+        block_container.echo_active_block(search_string, active_block_index)
 
 
 def main():
