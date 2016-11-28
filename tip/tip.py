@@ -62,8 +62,10 @@ def addstr_with_highlight(stdscr, line, key_search_regexp, highlight_line):
     search_result = key_search_regexp.search(line)
     if highlight_line:
         default_attribute = curses.color_pair(1)
+        whitespace_attribute = curses.color_pair(2)
     else:
         default_attribute = 0
+        whitespace_attribute = 0
     if search_result:
         start_pos = 0
         for m in key_search_regexp.finditer(line):
@@ -82,8 +84,9 @@ def addstr_with_highlight(stdscr, line, key_search_regexp, highlight_line):
     if highlight_line:
         (window_y, window_x) = stdscr.getmaxyx()
         if window_x > len(line) + 1:
-            stdscr.addstr(0, len(line), ' ' * (window_x - len(line) - 1), default_attribute)
-
+            # Print '-' with same foreground and background color because
+            # curses cannot colorize white spaces.
+            stdscr.addstr(0, len(line), '-' * (window_x - len(line) - 1), whitespace_attribute)
 
 class TextBlock(object):
     'Block of markdown'
@@ -183,6 +186,7 @@ def show_file_contents_with_incremental_search(tips_files):
     stdscr = curses.initscr()
     curses.start_color()
     curses.init_pair(1, HIGHLIGHT_FG_COLOR, HIGHLIGHT_BG_COLOR)
+    curses.init_pair(2, HIGHLIGHT_BG_COLOR, HIGHLIGHT_BG_COLOR)
     curses.noecho()
     curses.cbreak()             # Do not wait for enter key
     stdscr.keypad(True)
