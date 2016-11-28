@@ -139,7 +139,7 @@ class TextBlockContainer(object):
     def build_regexp_and_search(self, search_keywords):
         'Build regular expression fod AND search'
         return re.compile(''.join(
-            ['(?=.*{})'.format(key) for key in search_keywords]), re.IGNORECASE)
+            ['(?=.*{})'.format(key) for key in search_keywords]), re.IGNORECASE | re.DOTALL)
 
     def build_regexp_or_search(self, search_keywords):
         'Build regular expression fod OR search'
