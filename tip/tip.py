@@ -62,7 +62,7 @@ def addstr_with_highlight(stdscr, line, key_search_regexp, highlight_line):
     search_result = key_search_regexp.search(line)
     if highlight_line:
         default_attribute = curses.color_pair(1)
-        whitespace_attribute = curses.color_pair(2)
+        whitespace_attribute = curses.color_pair(2) | curses.A_UNDERLINE
     else:
         default_attribute = 0
         whitespace_attribute = 0
@@ -86,7 +86,7 @@ def addstr_with_highlight(stdscr, line, key_search_regexp, highlight_line):
         if window_x > len(line) + 1:
             # Print '-' with same foreground and background color because
             # curses cannot colorize white spaces.
-            stdscr.addstr(0, len(line), '-' * (window_x - len(line) - 1), whitespace_attribute)
+            stdscr.addstr(0, len(line), ' ' * (window_x - len(line) - 1), whitespace_attribute)
 
 
 class TextBlock(object):
