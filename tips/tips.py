@@ -128,6 +128,15 @@ class TextBlock(object):
         'Return true if content includes any of keys.'
         return key_regexp.search(self.content)
 
+    def get_lines_to_show(self):
+        'Return the number of lines to show block'
+        # +1 comes from file name
+        return len(self.content.split('\n')) + 1
+
+    # TODO: implment this method
+    def get_page_to_show(self, block_lines, block_index, window_height):
+        'return page to show this block'
+        pass
 
 class TextBlockContainer(object):
     'Container of TextBlock class'
@@ -156,6 +165,13 @@ class TextBlockContainer(object):
         reversed_active_block_index = len(matched_blocks) - active_block_index - 1
         if reversed_active_block_index < 0:
             reversed_active_block_index = 0
+        # compute pages
+        (window_y, window_x) = stdscr.getmaxyx()
+        needed_lines = [block.get_lines_to_show() for block in matched_blocks]
+        first_linenos =
+        pages = [block.get_page_to_show(needed_lines, i, window_y - 1)
+                 for block, i in zip(matched_blocks, range(len(matched_blocks)))]
+        active_page = pages[reversed_active_block_index]
         for block, i in zip(matched_blocks, range(len(matched_blocks))):
             block.show_with_curses(stdscr, search_keywords, search_keywords_or_regexp,
                                    reversed_active_block_index == i)
