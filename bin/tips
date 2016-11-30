@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import tip.tip
+import tips.tips
 
 if __name__ == '__main__':
-    tip.tip.main()
+    tips.tips.main()
