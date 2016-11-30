@@ -1,5 +1,5 @@
 from unittest import TestCase, skip
-import tip
+import tips
 
 
 class tipTest(TestCase):
