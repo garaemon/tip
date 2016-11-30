@@ -1,3 +1,3 @@
-# tip [![Build Status](https://travis-ci.org/garaemon/tip.svg?branch=ci)](https://travis-ci.org/garaemon/tip)
+# tips [![Build Status](https://travis-ci.org/garaemon/tips.svg?branch=ci)](https://travis-ci.org/garaemon/tips)
 
-tip is a command line tool to show tips.
+tips is a command line tool to show tips.
