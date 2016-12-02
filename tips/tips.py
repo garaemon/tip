@@ -92,10 +92,14 @@ def addstr_with_highlight(stdscr, line, key_search_regexp, highlight_line):
 class TextBlock(object):
     'Block of markdown'
 
-    def __init__(self, content, filename):
+    def __init__(self, content, filename, block_index):
         'Constructor of TextBlock retrieves content string'
         self.content = content
         self.filename = filename
+        self.index = block_index
+        self.matched_index = None
+        self.page = None
+        self.first_line_pos = None
 
     def show_with_curses(self, stdscr, keys=[], key_search_regexp=None, highlight=False):
         '''Show content of TextBlock with curses. key_search_regexp is a regular
@@ -116,6 +120,7 @@ class TextBlock(object):
         # Add separator with file name
         (window_y, window_x) = stdscr.getmaxyx()
         separator_string = '-({})'.format(self.filename) + '-' * (window_x - 1 - len(self.filename))
+        # separator_string = '-({}/{} - {})'.format(self.first_line_pos, self.page, self.filename)
         stdscr.addstr(0, 0, separator_string[:window_x - 1])
         stdscr.clrtoeol()
         stdscr.insertln()
@@ -133,10 +138,6 @@ class TextBlock(object):
         # +1 comes from file name
         return len(self.content.split('\n')) + 1
 
-    # TODO: implment this method
-    def get_page_to_show(self, block_lines, block_index, window_height):
-        'return page to show this block'
-        pass
 
 class TextBlockContainer(object):
     'Container of TextBlock class'
@@ -168,13 +169,17 @@ class TextBlockContainer(object):
         # compute pages
         (window_y, window_x) = stdscr.getmaxyx()
         needed_lines = [block.get_lines_to_show() for block in matched_blocks]
-        first_linenos =
-        pages = [block.get_page_to_show(needed_lines, i, window_y - 1)
-                 for block, i in zip(matched_blocks, range(len(matched_blocks)))]
-        active_page = pages[reversed_active_block_index]
+        # +2 = +1
+        first_line_pos = [sum(needed_lines[i + 1:]) + 2 for i in range(len(matched_blocks))]
         for block, i in zip(matched_blocks, range(len(matched_blocks))):
+            block.first_line_pos = first_line_pos[i]
+            block.page = first_line_pos[i] / window_y
+            block.matched_index = i
+        active_page = matched_blocks[reversed_active_block_index].page
+        active_blocks = [block for block in matched_blocks if block.page == active_page]
+        for block in active_blocks:
             block.show_with_curses(stdscr, search_keywords, search_keywords_or_regexp,
-                                   reversed_active_block_index == i)
+                                   block.matched_index == reversed_active_block_index)
 
     def echo_active_block(self, search_string, active_block_index):
         'Echo content of specified active block without curses'
@@ -214,11 +219,13 @@ def show_file_contents_with_incremental_search(tips_files):
             # '##'.
             content_string = f.read()
             blocked_contents_string = content_string.split('##')
+            counter = 0
             for blocked_content in blocked_contents_string:
                 if len(blocked_content) != 0:
                     # Do not show empty content
-                    block = TextBlock(blocked_content, tips_file)
+                    block = TextBlock(blocked_content, tips_file, counter)
                     blocks.append(block)
+                    counter = counter + 1
     block_container = TextBlockContainer(blocks)
     # to debug key input
     # block_container = TextBlockContainer([])
