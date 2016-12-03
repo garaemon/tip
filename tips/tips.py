@@ -219,6 +219,7 @@ def show_file_contents_with_incremental_search(tips_files):
             # '##'.
             content_string = f.read()
             blocked_contents_string = content_string.split('##')
+            blocked_contents_string.reverse()
             counter = 0
             for blocked_content in blocked_contents_string:
                 if len(blocked_content) != 0:
