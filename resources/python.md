@@ -55,3 +55,20 @@ coloredlogs.install(fmt='%(asctime)s [%(levelname)s] %(message)s')
 
 logging.error("This is error")
 ```
+
+## Color style in coloredlogs
+
+Use `coloredlogs.DEFAULT_FIELD_STYLES` and `field_style` keyword of
+`coloredlogs.install`.
+
+```python
+import logging
+import coloredlogs
+
+field_styles = coloredlogs.DEFAULT_FIELD_STYLES
+field_styles['levelname'] = {'color': 'white', 'bold': True}
+coloredlogs.install(field_styles=field_styles)
+
+logging.error("This is error")
+
+```
