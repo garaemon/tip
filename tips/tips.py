@@ -33,9 +33,19 @@ def get_resource_directories():
     current_directory = os.path.dirname(__file__)
     default_directory = os.path.join(current_directory, '..', 'resources')
     user_directory = os.path.expanduser('~/.tips')
+    directory_candidates = [default_directory, user_directory]
+    if 'TIPS_PATH' in os.environ:
+        # TIPS_PATH is a string includes multiple path to tips direcotry
+        # and which is separated by ':'.
+        directory_env_variable = os.environ['TIPS_PATH']
+        logging.debug('TIPS_PATH: {}'.format(directory_env_variable))
+        directory_envs = [os.path.expanduser(d)
+                          for d in directory_env_variable.split(':')]
+        directory_candidates.extend(directory_envs)
+    else:
+        logging.debug('no TIPS_PATH')
     # remove directories which do not exist
-    return [d for d in [default_directory, user_directory]
-            if os.path.exists(d)]
+    return [d for d in directory_candidates if os.path.exists(d)]
 
 
 def get_tips_files_from_directories(resource_dirs):
