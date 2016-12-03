@@ -34,3 +34,24 @@ regexp = re.compile(regexp_str, re.IGNORE)
 ```python
 re.compile('^(?=.*foo)(?=.*bar)').search('abc foo abc bar')
 ```
+
+## Colorize logging by coloredlogs
+
+```python
+import logging
+import coloredlogs
+coloredlogs.install(level=logging.DEBUG)
+
+logging.error("This is error")
+```
+
+## Specifying logging format in coloredlogs
+
+```python
+import logging
+import coloredlogs
+
+coloredlogs.install(fmt='%(asctime)s [%(levelname)s] %(message)s')
+
+logging.error("This is error")
+```
