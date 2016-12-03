@@ -166,6 +166,8 @@ class TextBlockContainer(object):
         reversed_active_block_index = len(matched_blocks) - active_block_index - 1
         if reversed_active_block_index < 0:
             reversed_active_block_index = 0
+        if reversed_active_block_index > len(matched_blocks) - 1:
+            reversed_active_block_index = len(matched_blocks) - 1
         # compute pages
         (window_y, window_x) = stdscr.getmaxyx()
         needed_lines = [block.get_lines_to_show() for block in matched_blocks]
@@ -219,6 +221,7 @@ def show_file_contents_with_incremental_search(tips_files):
             # '##'.
             content_string = f.read()
             blocked_contents_string = content_string.split('##')
+            blocked_contents_string.reverse()
             counter = 0
             for blocked_content in blocked_contents_string:
                 if len(blocked_content) != 0:
