@@ -23,3 +23,9 @@ find . -type d -name foo -prune -o -name '*.md' -print
 cwd=$(dirname "${0}")
 expr "${0}" : "/.*" > /dev/null || cwd=$(cd "${cwd}" && pwd)
 ```
+
+## Redirect all the output from command
+
+```sh
+command >/dev/null 2>&1
+```
