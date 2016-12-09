@@ -72,3 +72,13 @@ coloredlogs.install(field_styles=field_styles)
 logging.error("This is error")
 
 ```
+
+## Get root logger
+
+Call `logging.getLogger` with empty argument.
+
+```python
+import logging
+
+root_logger = logging.getLogger()
+```
