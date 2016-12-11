@@ -82,3 +82,14 @@ import logging
 
 root_logger = logging.getLogger()
 ```
+
+## Use pydoc to generate document.
+
+```sh
+pydoc <module-name>
+```
+
+You can generate html with `-w` option.
+```sh
+pydoc -w <module-name>
+```
