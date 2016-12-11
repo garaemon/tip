@@ -29,3 +29,17 @@ expr "${0}" : "/.*" > /dev/null || cwd=$(cd "${cwd}" && pwd)
 ```sh
 command >/dev/null 2>&1
 ```
+
+## Record and playback terminal work
+
+Use ttyrec and [seq2gif](https://github.com/saitoha/seq2gif).
+
+Record
+```
+ttyrec /path/to/log/file
+```
+
+Convert to gif animation. Do not forget to specify columns.
+```
+seq2gif -w $COLUMNS < /path/to/log/file > /path/to/gif
+```
